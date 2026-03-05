@@ -10,13 +10,15 @@ export const maxDuration = 120;
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization');
+  const analyzePassword = request.headers.get('x-analyze-password');
   const cronSecret = process.env.CRON_SECRET;
+  const expectedPassword = process.env.ANALYZE_PASSWORD ?? 'geheim';
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    const body = await request.text();
-    if (body !== '' || authHeader !== null) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const isManual = analyzePassword === expectedPassword;
+
+  if (!isCron && !isManual) {
+    return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
   }
 
   try {
