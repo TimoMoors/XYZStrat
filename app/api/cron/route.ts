@@ -8,9 +8,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+  const baseUrl = process.env.BASE_URL ?? 'http://localhost:3000';
 
   const res = await fetch(`${baseUrl}/api/analyze`, {
     method: 'POST',
