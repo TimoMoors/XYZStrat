@@ -67,6 +67,23 @@ export interface DailyReport {
   crypto: SectionAnalysis;
   narratives: Narrative[];
   recommendations: Recommendation[];
+  watchlist: WatchlistCoin[];
+}
+
+export interface WatchlistCoin {
+  id: string;
+  symbol: string;
+  name: string;
+  price: number;
+  change24h: number;
+  change7d: number;
+  marketCap: number;
+  sparkline: number[];
+  recommendation?: {
+    action: Action;
+    reason: string;
+    confidence: number;
+  };
 }
 
 export interface RawCryptoData {

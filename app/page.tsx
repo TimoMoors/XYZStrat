@@ -1,12 +1,13 @@
 import { Suspense } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Globe, BarChart2, Bitcoin, Zap, Clock } from 'lucide-react';
+import { Globe, BarChart2, Bitcoin, Zap, Clock, Star } from 'lucide-react';
 import { getLatestReport } from '@/lib/storage';
 import { MarketBar } from '@/components/MarketBar';
 import { SectionCard } from '@/components/SectionCard';
 import { NarrativeCard } from '@/components/NarrativeCard';
 import { RecommendationsTable } from '@/components/RecommendationsTable';
 import { TopMovers } from '@/components/TopMovers';
+import { WatchlistSection } from '@/components/WatchlistSection';
 import { DashboardClient } from '@/components/DashboardClient';
 
 export const dynamic = 'force-dynamic';
@@ -91,6 +92,18 @@ async function DashboardContent() {
           ))}
         </div>
       </div>
+
+      {/* Watchlist */}
+      {report.watchlist && report.watchlist.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Star size={16} className="text-yellow-400" />
+            <h2 className="text-white font-semibold text-lg">Watchlist</h2>
+            <span className="text-zinc-500 text-xs ml-1">7d sparklines · live prices from last analysis</span>
+          </div>
+          <WatchlistSection coins={report.watchlist} />
+        </div>
+      )}
 
       {/* Recommendations */}
       <div>

@@ -1,8 +1,9 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { MarketData } from '@/lib/types';
 import { clsx } from 'clsx';
+import { FearGreedGauge } from './FearGreedGauge';
 
 interface MarketBarProps {
   marketData: MarketData;
@@ -28,24 +29,6 @@ function PriceChip({ label, price, change }: { label: string; price: string; cha
   );
 }
 
-function FearGreedBadge({ value, label }: { value: number; label: string }) {
-  const getColor = () => {
-    if (value <= 25) return 'bg-red-900 border-red-700 text-red-300';
-    if (value <= 45) return 'bg-orange-900 border-orange-700 text-orange-300';
-    if (value <= 55) return 'bg-yellow-900 border-yellow-700 text-yellow-300';
-    if (value <= 75) return 'bg-emerald-900 border-emerald-700 text-emerald-300';
-    return 'bg-green-900 border-green-700 text-green-300';
-  };
-
-  return (
-    <div className={clsx('flex items-center gap-2 rounded-lg px-3 py-2 border', getColor())}>
-      <Activity size={14} />
-      <span className="text-xs font-medium">Fear & Greed</span>
-      <span className="font-bold text-sm">{value}</span>
-      <span className="text-xs opacity-80">{label}</span>
-    </div>
-  );
-}
 
 export function MarketBar({ marketData }: MarketBarProps) {
   const formatPrice = (p: number) =>
@@ -71,7 +54,10 @@ export function MarketBar({ marketData }: MarketBarProps) {
         price={formatPrice(marketData.ethPrice)}
         change={marketData.ethChange24h}
       />
-      <FearGreedBadge value={marketData.fearGreedIndex} label={marketData.fearGreedLabel} />
+      <div className="bg-zinc-800 rounded-lg px-3 py-1 border border-zinc-700">
+        <div className="text-zinc-400 text-xs font-medium text-center mb-0.5">Fear & Greed</div>
+        <FearGreedGauge value={marketData.fearGreedIndex} label={marketData.fearGreedLabel} />
+      </div>
       <div className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">
         <span className="text-zinc-400 text-xs font-medium">Market Cap</span>
         <span className="text-white font-semibold text-sm">{formatMarketCap(marketData.totalMarketCap)}</span>

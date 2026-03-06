@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchCryptoData, extractMarketSummary } from '@/lib/fetchers/crypto';
+import { fetchCryptoData, fetchWatchlistData, extractMarketSummary } from '@/lib/fetchers/crypto';
 import { fetchNewsData } from '@/lib/fetchers/news';
 import { analyzeMarkets } from '@/lib/analyzer';
 import { saveReport } from '@/lib/storage';
@@ -23,8 +23,9 @@ export async function POST(request: Request) {
 
   try {
     console.log('[analyze] Fetching market data...');
-    const [cryptoData, newsData] = await Promise.all([
+    const [cryptoData, watchlistData, newsData] = await Promise.all([
       fetchCryptoData(),
+      fetchWatchlistData(),
       fetchNewsData(
         process.env.NEWSAPI_KEY ?? '',
         process.env.CRYPTOPANIC_API_KEY ?? ''
@@ -33,13 +34,24 @@ export async function POST(request: Request) {
 
     console.log('[analyze] Running Claude analysis...');
     const marketData = extractMarketSummary(cryptoData);
-    const analysis = await analyzeMarkets(cryptoData, newsData);
+    const analysis = await analyzeMarkets(cryptoData, watchlistData, newsData);
+
+    // Merge Claude's per-coin recommendations into watchlist
+    const watchlistWithRecs = watchlistData.map((coin) => {
+      const rec = analysis.recommendations.find(
+        (r) => r.asset.toUpperCase() === coin.symbol || r.asset.toLowerCase() === coin.name.toLowerCase()
+      );
+      return rec
+        ? { ...coin, recommendation: { action: rec.action, reason: rec.reason, confidence: rec.confidence } }
+        : coin;
+    });
 
     const report: DailyReport = {
       id: new Date().toISOString().split('T')[0],
       generatedAt: new Date().toISOString(),
       marketData,
       ...analysis,
+      watchlist: watchlistWithRecs,
     };
 
     console.log('[analyze] Saving report to KV...');

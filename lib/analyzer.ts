@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { DailyReport, RawCryptoData, RawNewsData } from './types';
+import type { DailyReport, RawCryptoData, RawNewsData, WatchlistCoin } from './types';
 import { formatCryptoContext } from './fetchers/crypto';
 import { formatNewsContext } from './fetchers/news';
 
@@ -12,13 +12,18 @@ You analyze macro-economic conditions, traditional financial markets, and crypto
 Your analysis is data-driven, actionable, and concise. You understand narrative-driven investing in crypto.
 Always respond with valid JSON matching the exact schema provided. Be specific with asset names, not generic.`;
 
-function buildUserPrompt(cryptoContext: string, newsContext: string): string {
+function buildUserPrompt(cryptoContext: string, newsContext: string, watchlistSymbols: string[]): string {
   const today = new Date().toISOString().split('T')[0];
+  const watchlistStr = watchlistSymbols.join(', ');
   return `Today is ${today}. Analyze the following market data and news, then provide a comprehensive daily market intelligence report.
 
 ${cryptoContext}
 
 ${newsContext}
+
+IMPORTANT: The user's personal watchlist is: ${watchlistStr} (plus IREN/Iris Energy as a stock).
+You MUST include a buy/sell/hold recommendation for EACH of these assets in the recommendations array.
+Also include IREN (Iris Energy, NASDAQ mining stock) even without live price data.
 
 Respond ONLY with a JSON object matching this exact schema (no markdown, no explanation, just the JSON):
 {
@@ -82,11 +87,13 @@ Requirements:
 
 export async function analyzeMarkets(
   cryptoData: RawCryptoData,
+  watchlistData: WatchlistCoin[],
   newsData: RawNewsData
-): Promise<Omit<DailyReport, 'id' | 'generatedAt' | 'marketData'>> {
-  const cryptoContext = formatCryptoContext(cryptoData);
+): Promise<Omit<DailyReport, 'id' | 'generatedAt' | 'marketData' | 'watchlist'>> {
+  const cryptoContext = formatCryptoContext(cryptoData, watchlistData);
   const newsContext = formatNewsContext(newsData);
-  const userPrompt = buildUserPrompt(cryptoContext, newsContext);
+  const watchlistSymbols = watchlistData.map((c) => c.symbol).concat(['IREN']);
+  const userPrompt = buildUserPrompt(cryptoContext, newsContext, watchlistSymbols);
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-5',
