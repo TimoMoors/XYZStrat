@@ -27,6 +27,9 @@ async function fetchWithRetry<T>(
 }
 
 export async function fetchCryptoData(): Promise<RawCryptoData> {
+  const apiKey = process.env.COINGECKO_API_KEY;
+  const headers = apiKey ? { 'x-cg-demo-api-key': apiKey } : {};
+
   const [pricesRes, globalRes, fearGreedRes] = await Promise.all([
     fetchWithRetry(() =>
       axios.get(`${COINGECKO_BASE}/coins/markets`, {
@@ -38,10 +41,11 @@ export async function fetchCryptoData(): Promise<RawCryptoData> {
           sparkline: false,
           price_change_percentage: '24h',
         },
+        headers,
         timeout: 15000,
       })
     ),
-    fetchWithRetry(() => axios.get(`${COINGECKO_BASE}/global`, { timeout: 15000 })),
+    fetchWithRetry(() => axios.get(`${COINGECKO_BASE}/global`, { headers, timeout: 15000 })),
     axios.get(FEAR_GREED_URL, { timeout: 10000 }),
   ]);
 
